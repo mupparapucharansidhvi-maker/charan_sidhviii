@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Birthday Surprise</title>
+<style>
+  body {
+    margin: 0;
+    padding: 0;
+    font-family: "Poppins", sans-serif;
+    color: #fff;
+    text-align: center;
+    overflow-x: hidden;
+  }
+
+  /* ---------- Password overlay ---------- */
+  #pwOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+  }
+  .pwBox {
+    width: 100%;
+    max-width: 420px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 14px;
+    padding: 28px;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+  }
+  .pwBox h2 { margin-bottom: 8px; font-size: 1.4rem; color: #fff; }
+  .pwBox p { margin-bottom: 18px; color: #ffeef8; opacity: 0.9; }
+  .pwInput {
+    width: 100%;
+    padding: 12px;
+    border-radius: 10px;
+    border: none;
+    outline: none;
+    font-size: 1rem;
+    margin-bottom: 12px;
+  }
+  .pwBtn {
+    width: 100%;
+    padding: 12px;
+    border-radius: 10px;
+    border: none;
+    background: #ff4081;
+    color: #fff;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+  .pwError { color: #ffd7da; margin-top: 10px; font-size: 0.95rem; min-height: 20px; }
+
+  /* ---------- Buttons ---------- */
+  button {
+    padding: 15px 25px;
+    border-radius: 30px;
+    border: none;
+    background: #ff4081;
+    color: white;
+    font-size: 1em;
+    cursor: pointer;
+    margin-top: 20px;
+  }
+  button:hover { transform: scale(1.03); }
+
+  .cake, .slide, .final-image {
+    width: 90%;
+    max-width: 500px;
+    height: auto;
+    border-radius: 15px;
+    margin: 20px auto;
+    display: block;
+    object-fit: contain;
+  }
+
+  /* ---------- Sections ---------- */
+  .intro { display:block; background-color:#b3e5fc; padding:50px 0; }
+  .cake-scene { display:none; background-color:#b3e5fc; padding:50px 0; }
+  .memories { display:none; background-color:#b3e5fc; padding:50px 0; }
+  
+  /* ---------- Main Message ---------- */
+  .message {
+    display:none; 
+    background-color:#b3e5fc; 
+    padding:50px 20px; 
+    min-height:100vh; 
+    overflow-y:auto; 
+    text-align:left; 
+    line-height:1.6em; 
+    white-space: pre-wrap;
+    box-sizing: border-box;
+  }
+  .message::-webkit-scrollbar { width: 8px; }
+  .message::-webkit-scrollbar-thumb { background-color: #ff80ab; border-radius: 4px; }
+  .message p {
+    font-size: 1.12em;
+    line-height: 1.6em;
+    margin: 10px 0;
+    color: #fff;
+    text-shadow: 
+      0 0 5px #ff80ab, 
+      0 0 10px #ff80ab, 
+      0 0 15px #ff4081, 
+      0 0 20px #ff4081;
+  }
+
+  /* ---------- Floating Emojis ---------- */
+  .emoji {
+    position: absolute;
+    font-size: 2em;
+    animation: float 8s linear infinite;
+    opacity: 0.9;
+    pointer-events: none;
+  }
+  @keyframes float {
+    0% { transform: translateY(100vh) scale(1); opacity: 0; }
+    10% { opacity: 1; }
+    100% { transform: translateY(-10vh) scale(1.2); opacity: 0; }
+  }
+
+  /* ---------- Final Section ---------- */
+  .final-section {
+    display: none;
+    position: relative;
+    width: 100%;
+    min-height: 100vh;
+    text-align: center;
+    background-color: #000;
+    color: #fff;
+    overflow: hidden;
+    padding-top: 20px;
+  }
+  .final-section h2 {
+    font-size: 2em;
+    margin-bottom: 20px;
+    text-shadow: 0 0 15px #ff4081;
+    position: relative;
+    z-index: 10;
+  }
+  .final-image {
+    width: 90%;
+    max-width: 800px;
+    height: auto;
+    border-radius: 20px;
+    box-shadow: 0 0 20px #ff4081;
+    position: relative;
+    z-index: 10;
+  }
+  canvas#fireworkCanvas {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    pointer-events: none;
+  }
+</style>
+</head>
+<body>
+
+<!-- Password overlay -->
+<div id="pwOverlay">
+  <div class="pwBox">
+    <h2>This page is private</h2>
+    <p>Enter the password to view the surprise</p>
+    <input id="pwInput" class="pwInput" type="password" placeholder="Enter password" autocomplete="off" />
+    <button id="pwBtn" class="pwBtn">Unlock</button>
+    <div id="pwError" class="pwError"></div>
+  </div>
+</div>
+
+<!-- Floating emojis -->
+<div id="emojis"></div>
+
+<!-- Intro -->
+<div class="intro" id="intro">
+  <h1>✨ Hey Abhi ✨</h1>
+  <p>Ready for your little surprise?</p>
+  <button onclick="startExperience()">Click to Start 🎶</button>
+</div>
+
+<!-- Cake Scene -->
+<div class="cake-scene" id="cakeScene">
+  <h2>🎂 Happy Birthday Abhiama 🎂</h2>
+  <img src="cake.png" class="cake" alt="Cake">
+  <p>Wishing you endless smiles and happiness 💖</p>
+  <button onclick="showMemories()">Next 🌸</button>
+</div>
+
+<!-- Memories Slideshow -->
+<div class="memories" id="memories">
+  <h2>📸 Memories Together 💕</h2>
+  <img src="mem1.jpg" class="slide">
+  <img src="mem2.jpg" class="slide">
+  <img src="mem3.jpg" class="slide">
+  <img src="mem4.jpg" class="slide">
+  <img src="mem5.jpg" class="slide">
+  <img src="mem6.jpg" class="slide">
+  <img src="mem7.jpg" class="slide">
+  <img src="mem8.jpg" class="slide">
+  <img src="mem9.jpg" class="slide">
+  <img src="mem10.jpg" class="slide">
+  <button onclick="showMessage()">Next 💌</button>
+</div>
+
+<!-- Main Message -->
+<div class="message" id="message">
+  <h2>💌 A Short Note 💌</h2>
+  <p>
+Hii Abhi Ela unnav first of all Happiest Birthday Abhiama💗🥹.Eeroju ni Day abba happy ga enjoy Cheyyi  na valla nuv chala suffer ayyav dhaniki em cheppalo kuda ardham kavadam ledhuu nenu unna lekapoyina nuv ilagey ni birthday ni chala happy celebrate Chesko evari kosamo ni happiness vadhulukoku abba(including me) ni em karma abba na gurinchi antha suffer avvadam endhuku Cheppu asalu nenu worth kadhu abba nak unna overthinking ki nak unna insecurities ki nak unna careless ki  evaru natho undali anukoruu kani nuv endhuku unnav abba nalo em undhi antha laa aa roju ana na promise ni nilabettukunnana nak kosam evaru inthala cheyyaledhu abhi nen entha dooram pettina entha Chiraku theppinchina nannu em anav nak nijam nuv nammuthavo nammava edusthu ee text type chesthunna nijam I Love you soo muchhh abhiama 😭 nen marutha abhiama pakka marutha nannu Vadhilesey vellaku please 🤌🏻 asalu ippduu nen em ana cheppali ante kuda nak siggu vesthunndhi ela cheppagalagthu Cheppu inni cheskaa nijam cheppali ante nen letter radham anukunnappudu em cheppalo ardham kaley emm cheyalo ardham kaleyy ala ayipoindhii nen ninnu okkate korukuntunna nuv ni life ni enjoy cheyi evaru em cheppina vinaku kani na dhi oka chinna request nuv enjoy chese life lo nenu unta abba please 🥺 ninnu em ananu em thittina nak nitho undali anipisthundhii abhi ni Cheyyi patukoni thiragali anipisthundhii ayina Anni anipisthey nen crt ga undali kani ninnu adagatam entha varaku crt asalu nen em text chedham anukunna adhi na thappunu gurthuchesthundhi nen em cheppalekapothunna kani ni life nak antu okka chinna role ivvu adhey nak chala ekkuva abba  nenu ila cheppi ni day ni mood off chesthunndhunnai kani ni place place lo vere ammayi undi untey eppudo vellipoyedhi nik intha Long-distance ayina nuv crt ga unnav neney thappu chesa chesthunna kani nak ela cheppalo ardham kavadam ley abba sare poni nuv happy ga undu abba nen chuskunta abba ninnu  Baga eeroju kakapoyina nak antu oka roju vasthundhi appudu chala chala bagaa chuskunta abba ippatikey chala length undhi asaley idhi paper midha rasey letter kadhu.
+
+Wishing you a very very happiest loveliest birthday maa 💐🌷and Love you so much of the muches 😅 Happy ga life ni lead cheyali ani nuv life chala Baga success avvali ani nen aa devudini korukuntunna ..
+
+Yours lovingly 💗<br>
+M.Charan Sidhvi<br>
+🧿🧿
+  </p>
+  <button onclick="showFinal()">Next 🎆</button>
+</div>
+
+<!-- Final Section -->
+<div class="final-section" id="finalSection">
+  <h2>Once Again Wishing You Happiest Birthday Abhiama 💗🥹</h2>
+  <img src="final.jpg" class="final-image" alt="Final Surprise">
+  <canvas id="fireworkCanvas"></canvas>
+</div>
+
+<!-- Background Music -->
+<audio id="bgMusic" src="song.mp3" loop></audio>
+
+<script>
+  // Password setup
+  const CORRECT_PW = "CharanAbhi@3101";
+  const pwOverlay = document.getElementById('pwOverlay');
+  const pwInput = document.getElementById('pwInput');
+  const pwBtn = document.getElementById('pwBtn');
+  const pwError = document.getElementById('pwError');
+
+  pwInput.addEventListener('keydown', e => { if(e.key === 'Enter') pwBtn.click(); });
+  pwBtn.addEventListener('click', () => {
+    if(pwInput.value === CORRECT_PW){
+      pwOverlay.style.display='none';
+      document.getElementById('bgMusic').play().catch(()=>{});
+      document.body.focus();
+    } else {
+      pwError.textContent='Incorrect password — try again.';
+      pwInput.value=''; pwInput.focus();
+    }
+  });
+
+  // Sections
+  const intro = document.getElementById("intro");
+  const cakeScene = document.getElementById("cakeScene");
+  const memories = document.getElementById("memories");
+  const message = document.getElementById("message");
+  const finalSection = document.getElementById("finalSection");
+  const slides = document.querySelectorAll(".slide");
+  const bgMusic = document.getElementById("bgMusic");
+  let slideIndex=0, slideInterval;
+
+  // Floating emojis
+  const emojiList=["🌷","💗","💐","🎀","🎊","🎈","🪻","💖","💜"];
+  const emojiContainer = document.getElementById("emojis");
+  for(let i=0;i<25;i++){
+    const e=document.createElement("div");
+    e.classList.add("emoji");
+    e.textContent = emojiList[Math.floor(Math.random()*emojiList.length)];
+    e.style.left=Math.random()*100+"vw";
+    e.style.animationDuration=6+Math.random()*5+"s";
+    e.style.animationDelay=Math.random()*5+"s";
+    emojiContainer.appendChild(e);
+  }
+
+  // Start experience
+  function startExperience(){
+    bgMusic.play().catch(()=>{});
+    intro.style.display="none";
+    cakeScene.style.display="block";
+  }
+
+  // Memories slideshow
+  function showMemories(){
+    cakeScene.style.display="none";
+    memories.style.display="block";
+    slides.forEach(s=>s.style.display="none");
+    slideIndex=0;
+    slides[slideIndex].style.display="block";
+    slideInterval=setInterval(()=>{
+      slides[slideIndex].style.display="none";
+      slideIndex=(slideIndex+1)%slides.length;
+      slides[slideIndex].style.display="block";
+    },2000);
+  }
+
+  // Show main message
+  function showMessage(){
+    memories.style.display="none";
+    clearInterval(slideInterval);
+    message.style.display="block";
+  }
+
+  // Show final section
+  function showFinal(){
+    message.style.display="none";
+    finalSection.style.display="block";
+    startFireworks();
+  }
+
+  // Fireworks
+  function startFireworks(){
+    const canvas = document.getElementById('fireworkCanvas');
+    canvas.width=window.innerWidth;
+    canvas.height=window.innerHeight;
+    const ctx = canvas.getContext('2d');
+    const fireworks = [];
+    const particles = [];
+
+    function random(min,max){return Math.random()*(max-min)+min;}
+    function createFirework(){
+      fireworks.push({
+        x: random(50,canvas.width-50),
+        y: canvas.height,
+        targetY: random(50, canvas.height/2),
+        speed: random(4,7),
+        hue: random(0,360)
+      });
+    }
+
+    function update(){
+      ctx.fillStyle='rgba(0,0,0,0.2)';
+      ctx.fillRect(0,0,canvas.width,canvas.height);
+
+      for(let i=fireworks.length-1;i>=0;i--){
+        const f=fireworks[i];
+        f.y-=f.speed;
+        ctx.beginPath();
+        ctx.arc(f.x,f.y,2,0,Math.PI*2);
+        ctx.fillStyle='hsl('+f.hue+',100%,50%)';
+        ctx.fill();
+        if(f.y<=f.targetY){
+          for(let j=0;j<30;j++){
+            particles.push({
+              x:f.x,
+              y:f.y,
+              speed:random(1,6),
+              angle:random(0,2*Math.PI),
+              hue:f.hue,
+              alpha:1
+            });
+          }
+          fireworks.splice(i,1);
+        }
+      }
+
+      for(let i=particles.length-1;i>=0;i--){
+        const p=particles[i];
+        p.x+=p.speed*Math.cos(p.angle);
+        p.y+=p.speed*Math.sin(p.angle)+0.5;
+        p.alpha-=0.02;
+        ctx.beginPath();
+        ctx.arc(p.x,p.y,2,0,Math.PI*2);
+        ctx.fillStyle='hsla('+p.hue+',100%,50%,'+p.alpha+')';
+        ctx.fill();
+        if(p.alpha<=0) particles.splice(i,1);
+      }
+
+      if(Math.random()<0.05) createFirework();
+      requestAnimationFrame(update);
+    }
+
+    update();
+  }
+
+  // Focus password input on load
+  window.addEventListener('load',()=>{pwInput.focus();});
+  window.addEventListener('resize',()=>{const canvas=document.getElementById('fireworkCanvas'); canvas.width=window.innerWidth; canvas.height=window.innerHeight;});
+</script>
+
+</body>
+</html>
